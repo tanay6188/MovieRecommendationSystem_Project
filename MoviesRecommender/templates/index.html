@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recflix</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Google Font: Pacifico -->
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+    <style>
+        /* Fullscreen slideshow styles */
+        #image-slideshow {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            z-index: -1; /* Places it behind other elements */
+        }
+
+        #image-slideshow img {
+            position: absolute;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+
+        #image-slideshow img.active {
+            opacity: 1;
+        }
+
+        /* Positioning the search bar */
+        .search-container {
+            position: relative;
+            z-index: 3; /* Above slideshow */
+            margin-top: 20px;
+            display: flex;
+            justify-content: flex-start;
+            padding-left: 30px;
+        }
+
+        #search-form {
+            margin-left: -300px;
+        }
+
+        /* Styling for the Home button */
+        #home-button {
+            display: block;
+            margin-top: 10px;
+            margin-left: 30px; /* Aligns with the logo's left padding */
+        }
+
+        /* Movie section styling */
+        .movie-section {
+            display: none; /* Initially hidden */
+            margin-top: 20px;
+        }
+
+        /* Movie card styling */
+        .movie-card {
+            background-color: #444444;
+            color: white;
+            border: none;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+        }
+
+        .no-recommendations {
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="logo-container">
+            <div class="navbar-brand">
+                <span class="letter">R</span>
+                <span class="letter">E</span>
+                <span class="letter">C</span>
+                <span class="letter">F</span>
+                <span class="letter">L</span>
+                <span class="letter">I</span>
+                <span class="letter">X</span>
+            </div>
+            
+            <!-- Home Button -->
+            <button id="home-button" class="btn btn-light mt-2">Home</button>
+        </div>
+    </div>
+
+    <!-- Fullscreen Slideshow -->
+    <div id="image-slideshow">
+        <!-- Images for the slideshow -->
+        <img src="{{ url_for('static', filename='backimages/img13.jpeg') }}" class="active" alt="Image 1">
+        <img src="{{ url_for('static', filename='backimages/img2.jpg') }}" alt="Image 2">
+        <img src="{{ url_for('static', filename='backimages/img3.jpeg') }}" alt="Image 3">
+        <img src="{{ url_for('static', filename='backimages/img4.jpg') }}" alt="Image 4">
+        <img src="{{ url_for('static', filename='backimages/img5.jpeg') }}" alt="Image 5">
+        <img src="{{ url_for('static', filename='backimages/img6.jpg') }}" alt="Image 6">
+        <img src="{{ url_for('static', filename='backimages/img7.jpeg') }}" alt="Image 7">
+        <img src="{{ url_for('static', filename='backimages/img8.jpg') }}" alt="Image 8">
+        <img src="{{ url_for('static', filename='backimages/img9.jpeg') }}" alt="Image 9">
+        <img src="{{ url_for('static', filename='backimages/img10.jpg') }}" alt="Image 10">
+        <img src="{{ url_for('static', filename='backimages/img11.jpg') }}" alt="Image 11">
+        <img src="{{ url_for('static', filename='backimages/img12.jpeg') }}" alt="Image 12">
+        <img src="{{ url_for('static', filename='backimages/img1.jpeg') }}" alt="Image 13">
+        <img src="{{ url_for('static', filename='backimages/img14.jpg') }}" alt="Image 14">
+        <img src="{{ url_for('static', filename='backimages/img15.jpeg') }}" alt="Image 15">
+        <img src="{{ url_for('static', filename='backimages/img16.jpeg') }}" alt="Image 16">
+        <img src="{{ url_for('static', filename='backimages/img17.jpeg') }}" alt="Image 17">
+        <img src="{{ url_for('static', filename='backimages/img18.jpeg') }}" alt="Image 18">
+    </div>
+
+    <div class="container mt-4 d-flex">
+        <div class="search-container">
+            <form id="search-form" class="form-inline justify-content-start">
+                <input type="text" id="movie-input" class="form-control mr-2" placeholder="Enter Keywords..." required>
+                <button type="submit" class="btn btn-light">Search</button>
+            </form>
+        </div>
+
+        <div id="recommendations" class="recommendations-container ml-3">
+            <div class="row">
+                <!-- Recommendations will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Genre Movies Section -->
+    <div id="movies-section" class="container mt-4">
+        <div id="action-section" class="movie-section">
+            <h2>Action Movies</h2>
+            <div id="action-list"></div>
+        </div>
+        <div id="adventure-section" class="movie-section">
+            <h2>Adventure Movies</h2>
+            <div id="adventure-list"></div>
+        </div>
+        <!-- Add more sections as needed -->
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.0.6/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        const images = document.querySelectorAll('#image-slideshow img');
+        let currentIndex = 0;
+
+        function showNextImage() {
+            images[currentIndex].classList.remove('active');
+            currentIndex = (currentIndex + 1) % images.length;
+            images[currentIndex].classList.add('active');
+        }
+
+        setInterval(showNextImage, 3000); // Change image every 3 seconds
+
+        const form = document.getElementById('search-form');
+        const recommendationsDiv = document.getElementById('recommendations');
+
+        form.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const movieTitle = document.getElementById('movie-input').value;
+
+            const response = await fetch(`/recommend?title=${encodeURIComponent(movieTitle)}`);
+            const recommendations = await response.json();
+
+            recommendationsDiv.innerHTML = '';
+
+            if (Array.isArray(recommendations) && recommendations.length > 0) {
+                recommendations.forEach(movie => {
+                    const colDiv = document.createElement('div');
+                    colDiv.className = 'col-md-3 mb-3';
+
+                    colDiv.innerHTML = `
+                        <div class="card">
+                            <img src="${movie.poster_url}" class="card-img-top" alt="${movie.title}">
+                            <div class="card-body">
+                                <h5 class="card-title">${movie.title}</h5>
+                                <p class="card-text">${movie.overview}</p>
+                                <p><strong>Rating:</strong> ${movie.rating}</p>
+                                <p><strong>Popularity:</strong> ${movie.popularity}</p>
+                                <p><strong>Release Date:</strong> ${movie.release_date}</p>
+                                <a href="#" class="btn btn-light">View Details</a>
+                            </div>
+                        </div>
+                    `;
+                    recommendationsDiv.appendChild(colDiv);
+                });
+            } else {
+                recommendationsDiv.innerHTML = '<p class="no-recommendations">No Recommendations Found.</p>';
+            }
+        });
+
+        // Redirect to homepage on Home button click
+        document.getElementById('home-button').addEventListener('click', function() {
+            window.location.href = '/';
+        });
+
+        // Handle genre button clicks
+        const genreButtons = document.querySelectorAll('.genre-button');
+        genreButtons.forEach(button => {
+            button.addEventListener('click', async function() {
+                const genre = button.getAttribute('data-genre');
+                const moviesList = document.getElementById(`${genre}-list`);
+                const moviesSection = document.getElementById(`${genre}-section`);
+
+                const response = await fetch(`/movies?genre=${encodeURIComponent(genre)}`);
+                const movies = await response.json();
+
+                moviesList.innerHTML = ''; // Clear previous movies
+                moviesSection.style.display = 'block'; // Show the section
+
+                if (Array.isArray(movies) && movies.length > 0) {
+                    movies.forEach(movie => {
+                        const movieCard = document.createElement('div');
+                        movieCard.className = 'movie-card';
+                        movieCard.innerHTML = `
+                            <h5>${movie.title}</h5>
+                            <p>${movie.overview}</p>
+                        `;
+                        moviesList.appendChild(movieCard);
+                    });
+                } else {
+                    moviesList.innerHTML = '<p class="no-recommendations">No Movies Found for this Genre.</p>';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
